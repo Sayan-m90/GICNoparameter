@@ -1,0 +1,36 @@
+#project( GIComplex )
+
+#cmake_minimum_required( VERSION 2.8 FATAL_ERROR )
+#cmake_policy( SET CMP0017 NEW )
+
+include_directories( ${CMAKE_SOURCE_DIR}/src "${CMAKE_SOURCE_DIR}/src/include" "${CMAKE_SOURCE_DIR}/src/gic" )
+link_directories(${CMAKE_SOURCE_DIR}/src/lib)
+# Boost
+find_package( Boost 1.4 COMPONENTS program_options system REQUIRED )
+include_directories( ${Boost_INCLUDE_DIRS} )
+link_directories(${Boost_LIBRARY_DIRS})
+
+include_directories( "." ".." ) 
+
+add_executable( GIComplex 
+	ANNSearchSampling.h
+	ANNSearchSampling.cpp
+	DijkstraAlgorithm.h
+	DijkstraAlgorithm.cpp
+	FibonacciHeap.h
+	FibonacciHeap.cpp
+	LongVector.h
+	PointSet.h
+	PointSet.cpp
+	SimpleGraph.h
+	SimpleGraph.cpp
+	gic.cpp
+	gic/FlagComplex.h
+	gic/FlagComplex.cpp
+	gic/GIComplex.h
+	gic/GIComplex.cpp
+	gic/SimplexNode.h
+	gic/SimplicialComplex.h
+	)
+#target_link_libraries( GIComplex ${Boost_LIBRARIES}  ann.lib ) ${Boost_LIBRARIES}
+target_link_libraries( GIComplex  ${Boost_LIBRARIES} libANN.a)

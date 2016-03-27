@@ -1,0 +1,8 @@
+./samplerrev -d 3 -df datapoints.txt -nn 1 -qf querypoints.txt
+g++ samplerrev.cpp -o samplerrev -Iann/include -Lann/lib -lANN
+
+
+
+
+
+g++ simpersInpGen2.cpp -o simpersInpGen
