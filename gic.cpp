@@ -101,7 +101,7 @@ int dijkstra(int *graph[], int V, int src, int* dist, std::map<int, int> SubptIn
 
 
 ////////////////
- void getSubPointIndex(char* filename1, char* filename2, std::map<int, int> &SubptInd)
+ void getSubPointIndex(const char* filename1,const char* filename2, std::map<int, int> &SubptInd)
 {
 	std::vector<float*> inPoints = std::vector<float*>();
 	char str[10];
@@ -246,7 +246,7 @@ return pos;
 }
 
 /////////////////////////////////////////////////
-void inputGraph(char* filename1, char* filename2, std::map<int, int> &SubPointIndex, std::vector<int> &ColorMapping )
+void inputGraph(const char* filename1,const char* filename2, std::map<int, int> &SubPointIndex, std::vector<int> &ColorMapping )
 {
 	ifstream file(filename1);
 	int dim;	
@@ -267,6 +267,8 @@ void inputGraph(char* filename1, char* filename2, std::map<int, int> &SubPointIn
 					SubPointIndex[i] = 0;
 				else if(SubptInd[i]!=0)
 					{	SubPointIndex[i] = SubptInd[i];	count1++;}
+				else if(SubptInd[i]==0)
+					{SubPointIndex[i] = 0;}
 				if(SubptInd[i]>max1)
 					max1 = SubptInd[i];
 			}
@@ -311,7 +313,7 @@ void inputGraph(char* filename1, char* filename2, std::map<int, int> &SubPointIn
 
      }
 
-    cout<<" entering colormap loop.";
+    //cout<<" entering colormap loop.";
 	//getchar();
 int first[noPoints];
 int count=0, abc;
@@ -349,7 +351,7 @@ for(int i=0;i<noPoints;i++)
 	}
 
 }
-cout<<"		exit colormap loop.";
+//cout<<"		exit colormap loop.";
 ofstream filee("ColorMap");
 //cout<<"color map"<<count<<"\n";
 //getchar();
@@ -507,8 +509,9 @@ void ComputeBiColoredGraph(const float eps_sampling_dist, const float delta_dist
 	//RipsGraph.WriteBackToFile("test_rip.txt");
 	return;
 }
+
 void ComputeBiColoredGraph(const char* pFileName, const float delta_dist, std::vector<std::vector<float> > &pts,
-						std::map<int, int> &SubPointIndex, SimpleGraph &biColoredGraph, char* filename1, char* filename2)
+						std::map<int, int> &SubPointIndex, SimpleGraph &biColoredGraph,const char* filename1,const char* filename2)
 {
 	//
 	//cout<<"till here";			getchar();
@@ -528,7 +531,7 @@ void ComputeBiColoredGraph(const char* pFileName, const float delta_dist, std::v
 	// generate the batch file for creating rips using this rips graph
 	// Delat-Sparse-Sampling and construct rips graph on sub-sampling points
 
-	//DeltaSparseSampling_GraphDistance(orgGraph, delta_dist, SubPointIndex, ColorMapping);
+//	DeltaSparseSampling_GraphDistance(orgGraph, delta_dist, SubPointIndex, ColorMapping);
 	//std::cout<<" after all this modified. SubPointIndex:"<<SubPointIndex.size()<<" ColorMapping: "<<ColorMapping.size()<<"\n";
 	//ofstream fileee("SubptInd2");
 	//for(int i =0;i<SubPointIndex.size();i++)
@@ -786,6 +789,7 @@ char * strLicense = "THIS SOFTWARE IS PROVIDED \"AS-IS\". THERE IS NO WARRANTY O
 bool ParseCommand(int argc, char** argv,
 				int &input_type,
 				std::string &InputFile,
+				std::string &SubsampleFile,
 				std::string &OutputFile,
 				bool &graph_distance_flag,
 				float &eps_dist,
@@ -803,6 +807,7 @@ bool ParseCommand(int argc, char** argv,
 			(",l", "License information;")
 			("type", po::value<int>(&input_type)->required(), "Input data type: point cloud (0) or weighted graph (1);")
 			(",I", po::value<std::string>(&InputFile)->required(), "Input file name;")
+			(",S", po::value<std::string>(&SubsampleFile)->required(), "Subsampled file name;")
 			(",O", po::value<std::string>(&OutputFile)->required(), "Output file name prefix;")
 			(",g", po::value<bool>(&graph_distance_flag)->default_value(false), "Subsample by Euclidean distance (false) or graph distance (true); for weighted graph input, it's always (true);")
 			("epsilon", po::value<float>(&eps_dist), "Parameter for building the Rips graph on input samples; Not used for weighted graph input;")
@@ -854,6 +859,7 @@ int main(int argc, char **argv)
 	//
 	std::string InputFileName;
 	std::string OutputFileName;
+	std::string SubsampleFileName;
 	int input_type = 0;
 	float eps_dist = .05f;
 	float delta_dist = 0.9f;
@@ -865,12 +871,13 @@ int main(int argc, char **argv)
 //	cout<<"\nfinish read";
 //	exit(0);
 	//
-	std::cout<<"graphBunny.txt ";
-	if (ParseCommand(argc, argv, input_type, InputFileName, OutputFileName, graph_distance_flag, eps_dist, delta_dist, max_dimension))
+	//std::cout<<"graphBunny.txt ";
+	if (ParseCommand(argc, argv, input_type, InputFileName, SubsampleFileName, OutputFileName, graph_distance_flag, eps_dist, delta_dist, max_dimension))
 	{
 		if (!input_type)
 		{
 			PointSet pts;
+
 			//pts.SampleCrossLine(0.02, 1.0);
 			pts.ReadPointsFromFile(InputFileName.c_str());
 			std::map<int, int> SubPointIndex;
@@ -900,7 +907,7 @@ int main(int argc, char **argv)
 			SimpleGraph biColoredGraph;
 			//
 
-			ComputeBiColoredGraph(InputFileName.c_str(), delta_dist, pts, SubPointIndex, biColoredGraph,"graphBunny.txt","subsampleBun.txt");
+			ComputeBiColoredGraph(InputFileName.c_str(), delta_dist, pts, SubPointIndex, biColoredGraph,InputFileName.c_str(),SubsampleFileName.c_str());
 			//std::cout<<"from main SubPointIndex "<<biColoredGraph.color_number;
 			//
 			//
