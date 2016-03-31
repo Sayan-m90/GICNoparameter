@@ -15,6 +15,7 @@
 #include <limits.h>
 #include <boost/program_options.hpp>
 #define ROUNDOFF 100
+#include <float.h>
 float rounding(float x)	{return ceil(x*ROUNDOFF)/ROUNDOFF;}
 float minuss(float x, float y){ return abs(rounding(rounding(x)-rounding(y)));}
 ////////////////
@@ -22,14 +23,15 @@ float minuss(float x, float y){ return abs(rounding(rounding(x)-rounding(y)));}
 
 // A utility function to find the vertex with minimum distance value, from
 // the set of vertices not yet included in shortest path tree
-int minDistance(int dist[], int V, bool sptSet[])
+int minDistance(float dist[], int V, bool sptSet[])
 {
    // Initialize min value
-   int min = INT_MAX, min_index;
+   float min = FLT_MAX;
+   int min_index;
  
    for (int v = 0; v < V; v++)
      if (sptSet[v] == false && dist[v] <= min)
-         min = dist[v], min_index = v;
+         {min = dist[v]; min_index = v;}
  
    return min_index;
 }
@@ -44,7 +46,7 @@ int printSolution(int dist[], int V, int n)
  
 // Funtion that implements Dijkstra's single source shortest path algorithm
 // for a graph represented using adjacency matrix representation
-int dijkstra(int *graph[], int V, int src, int* dist, std::map<int, int> SubptInd)
+int dijkstra(float *graph[], int V, int src, float* dist, std::vector<int> SubptInd)
 {
 	
     //static int dist[V];     // The output array.  dist[i] will hold the shortest
@@ -55,7 +57,11 @@ int dijkstra(int *graph[], int V, int src, int* dist, std::map<int, int> SubptIn
  
      // Initialize all distances as INFINITE and stpSet[] as false
      for (int i = 0; i < V; i++)
-        dist[i] = INT_MAX, sptSet[i] = false;
+        {
+        	//if(i!=src)
+        	dist[i] = FLT_MAX;
+        	sptSet[i] = false;
+        }
  	
      // Distance of source vertex from itself is always 0
      dist[src] = 0;
@@ -88,7 +94,7 @@ int dijkstra(int *graph[], int V, int src, int* dist, std::map<int, int> SubptIn
          // u to v, and total weight of path from src to  v through u is 
          // smaller than current value of dist[v]
        	//if(count == 2 && v>6700) {	cout<<"inside dijkstraloop. u:"<<u<<" "<<v<<"\n";		getchar();}
-         if (!sptSet[v] && graph[u][v] && dist[u] != INT_MAX 
+         if (!sptSet[v] && graph[u][v] && dist[u] != FLT_MAX 
                                        && dist[u]+graph[u][v] < dist[v])
             dist[v] = dist[u] + graph[u][v];
     	}
@@ -101,7 +107,7 @@ int dijkstra(int *graph[], int V, int src, int* dist, std::map<int, int> SubptIn
 
 
 ////////////////
- void getSubPointIndex(const char* filename1,const char* filename2, std::map<int, int> &SubptInd)
+ int getSubPointIndex(const char* filename1,const char* filename2, std::map<int, int> &SubptInd)
 {
 	std::vector<float*> inPoints = std::vector<float*>();
 	char str[10];
@@ -197,12 +203,19 @@ int dijkstra(int *graph[], int V, int src, int* dist, std::map<int, int> SubptIn
 	 			float y = (subPoints[i][1]-inPoints[j][1]);
 	 			float z = (subPoints[i][2]-inPoints[j][2]);
 	 			if(x<0)	x = -x;	if(y<0) y = -y; if(z<0)	z =-z;
-	 			if( x <=0.01 && y <=0.01 &&  z <= 0.01)
+	 			if( x <=0.00001 && y <=0.00001 &&  z <= 0.00001)
 	 				{
+	 					//if(i==0)
 	 					if(i==0)
-	 						SubptInd[j]=freqTot+10;
-	 					else
-	 						SubptInd[j]=i;
+	 						SubptInd[j] = freqTot+10;
+	 							//SubptInd.insert ( std::pair<int,int>(j,i) );
+	 							else SubptInd[j] = i;
+	 							//->first = 
+
+	 							//SubptInd[j]=freqTot+10;
+	 					
+	 					//else
+	 					//	SubptInd[j]=i;
 	 					countre++;
 	 					break;
 	 				}
@@ -223,6 +236,7 @@ int dijkstra(int *graph[], int V, int src, int* dist, std::map<int, int> SubptIn
 	 }
 
 cout<<countre<<". out of sub map\n";
+return freqTot;
 //vector<float*>().swap(inPoints);
 //vector<float*>().swap(subPoints);
 //return SubptInd;
@@ -232,18 +246,18 @@ cout<<countre<<". out of sub map\n";
 
 /////////////////////////////////////////////////
 
-int findmin(int first[], int noPoints,std::map<int, int> SubptInd )
-{
-	int min = INT_MAX;
-	int pos = -1;
-	for(int i=0;i<noPoints;i++)
-		if(first[i]<min && SubptInd[i]!=0)
-			{
-				min = first[i];
-				pos = i;
-			}
-return pos;
-}
+//int findmin(int first[], int noPoints,std::map<int, int> SubptInd )
+//{/
+//	int min = INT_MAX;
+//	int pos = -1;
+//	for(int i=0;i<noPoints;i++)
+//		if(first[i]<min && SubptInd[i]!=0)
+//			{
+//				min = first[i];
+//				pos = i;
+//			}
+//return pos;
+//}
 
 /////////////////////////////////////////////////
 void inputGraph(const char* filename1,const char* filename2, std::map<int, int> &SubPointIndex, std::vector<int> &ColorMapping )
@@ -253,13 +267,28 @@ void inputGraph(const char* filename1,const char* filename2, std::map<int, int> 
 	int noPoints;
 	char str[10];
 	
-	std::map<int, int>   SubptInd;
-	getSubPointIndex(filename1,filename2,SubptInd);
+	std::vector<int>   SubptInd;
+	int freqTot = getSubPointIndex(filename1,filename2,SubPointIndex);				///SubptInd contains the index of the subsampled points in the original file
 	//getchar()
 	int count1=0;
-	cout<<"\ninside inputGraph. SubptInd: "<<SubptInd.size(); 	
-	ofstream fileee("SubptInd");
+	
+
+	for(int i=0;i<freqTot;i++)
+		SubptInd.push_back(0);
+
+	typedef std::map<int,int>::iterator it_type;
+for(it_type iterator = SubPointIndex.begin(); iterator != SubPointIndex.end(); iterator++) 
+		{
+			//if(iterator->second > freqTot)
+			//	SubptInd[iterator->first] = 0;	
+			SubptInd[iterator->first] = iterator->second;
+			count1++;
+		}
+cout<<"\ninside inputGraph. SubptInd: "<<SubptInd.size(); 	
+//	ofstream fileee("SubptInd");
+
 	int max1 = 0, max2 = 0;
+/*
 	for(int i=0;i<SubptInd.size();i++)
 			{
 				fileee<<SubptInd[i]<<"\n";
@@ -272,9 +301,9 @@ void inputGraph(const char* filename1,const char* filename2, std::map<int, int> 
 				if(SubptInd[i]>max1)
 					max1 = SubptInd[i];
 			}
-			//getchar();
+*/			//getchar();
 	//exit(0);
-			cout<<" SubPointIndex "<<SubPointIndex.size()<<" count "<<count1<<".		";
+	cout<<" SubPointIndex "<<SubPointIndex.size()<<"\n"<<" count "<<count1<<".		";
 	file>>str;		//get dimension
 	dim = atoi(str);
 	
@@ -289,13 +318,16 @@ void inputGraph(const char* filename1,const char* filename2, std::map<int, int> 
 	}	//all datapoints have been removed. now form the graph
 	
 	//////////Read in graph
-	int *MortonGraph[noPoints];
+	float *MortonGraph[noPoints];
 	
     for (int i=0; i<noPoints; i++)
         {
-        	MortonGraph[i] = (int *)malloc(noPoints * sizeof(int));
-        	//for(int j=0;j<noPoints;j++)
-        	//	MortonGraph[i][j] = 0;
+        	MortonGraph[i] = (float *)malloc(noPoints * sizeof(float));
+        	for(int j=0;j<noPoints;j++)
+        		{
+        			MortonGraph[i][j] = 0.0;
+        			//MortonGraph[j][i] = INT_MAX;
+        		}
 
         } 
 
@@ -307,7 +339,8 @@ void inputGraph(const char* filename1,const char* filename2, std::map<int, int> 
      while(!file.eof())
      {
      	file>>str1;	file>>str2;	file>>str3;
-     	int u = atoi(str1), v = atoi(str2), weight = atoi(str3);
+     	int u = atoi(str1), v = atoi(str2);
+     	float weight = atof(str3);
      	MortonGraph[u][v] = weight;
      	MortonGraph[v][u] = weight;
 
@@ -315,18 +348,18 @@ void inputGraph(const char* filename1,const char* filename2, std::map<int, int> 
 
     //cout<<" entering colormap loop.";
 	//getchar();
-int first[noPoints];
-int count=0, abc;
+float first[noPoints];
+int count=0;
 //getchar();
 for(int i=0;i<noPoints;i++)
 {
 	if(SubptInd[i]!=0)
 		{ 
-			abc = SubptInd[i];
-			if(SubptInd[i]>SubptInd.size())
+			
+			if(SubptInd[i]>freqTot)
 				ColorMapping[i]= 0;
 			else
-				ColorMapping[i]= abc;
+				ColorMapping[i]= SubptInd[i];
 
 				count++;
 		}	//cout<<"end if part "; getchar();}	//this point is selected
@@ -342,8 +375,10 @@ for(int i=0;i<noPoints;i++)
 		if(minpos == -1)	{cout<<"Error ! Point no:"<<i; exit(0);}
 		//cout<<"before color map";
 		//getchar();
-		if(minpos>SubptInd.size())
+		else if(minpos==freqTot+10)
 			ColorMapping[i] = 0;
+		else if(minpos>SubptInd.size())
+			{ColorMapping[i] = 0;	cout<<"Error. greater than subpt index "<<minpos<<"fir index "<<i; exit(0);}
 		else
 			ColorMapping[i] = minpos;
 		//cout<<"after color map";
@@ -511,7 +546,7 @@ void ComputeBiColoredGraph(const float eps_sampling_dist, const float delta_dist
 }
 
 void ComputeBiColoredGraph(const char* pFileName, const float delta_dist, std::vector<std::vector<float> > &pts,
-						std::map<int, int> &SubPointIndex, SimpleGraph &biColoredGraph,const char* filename1,const char* filename2)
+						std::map<int, int> &SubPointIndex, SimpleGraph &biColoredGraph,const char* filename2)
 {
 	//
 	//cout<<"till here";			getchar();
@@ -524,14 +559,14 @@ void ComputeBiColoredGraph(const char* pFileName, const float delta_dist, std::v
 	//cout<<"came in";	getchar();
 
 	ColorMapping.resize(orgGraph.vecNode.size());
-	inputGraph(filename1, filename2, SubPointIndex, ColorMapping );
+	inputGraph(pFileName, filename2, SubPointIndex, ColorMapping );
 //	exit(0);
 	//
 	//std::cout << "org comp " << RipsGraph.CheckComponents() << std::endl;
 	// generate the batch file for creating rips using this rips graph
 	// Delat-Sparse-Sampling and construct rips graph on sub-sampling points
 
-//	DeltaSparseSampling_GraphDistance(orgGraph, delta_dist, SubPointIndex, ColorMapping);
+	//DeltaSparseSampling_GraphDistance(orgGraph, delta_dist, SubPointIndex, ColorMapping);
 	//std::cout<<" after all this modified. SubPointIndex:"<<SubPointIndex.size()<<" ColorMapping: "<<ColorMapping.size()<<"\n";
 	//ofstream fileee("SubptInd2");
 	//for(int i =0;i<SubPointIndex.size();i++)
@@ -546,7 +581,21 @@ void ComputeBiColoredGraph(const char* pFileName, const float delta_dist, std::v
 	//getchar();
 	ANNSearch::SetColorMappingAndExtractColoredGraph(ColorMapping, orgGraph, biColoredGraph);
 	ofstream filee("ColorMap");
+	ofstream fileee("SubPointIndex");
 	int max2 = 0;
+	int max3 = 0;
+
+typedef std::map<int,int>::iterator it_type;
+for(it_type iterator = SubPointIndex.begin(); iterator != SubPointIndex.end(); iterator++) 
+{
+	//if(iterator->second!=0)
+	{
+	fileee<< iterator->first<<" ";
+    fileee<< iterator->second<<"\n" ;
+	}
+    
+    // Repeat if you also want to iterate through the second map.
+}
 	//cout<<"color map"<<count<<"\n";
 	//getchar();
 	for(int i=0;i<ColorMapping.size();i++)
@@ -907,7 +956,7 @@ int main(int argc, char **argv)
 			SimpleGraph biColoredGraph;
 			//
 
-			ComputeBiColoredGraph(InputFileName.c_str(), delta_dist, pts, SubPointIndex, biColoredGraph,InputFileName.c_str(),SubsampleFileName.c_str());
+			ComputeBiColoredGraph(InputFileName.c_str(), delta_dist, pts, SubPointIndex, biColoredGraph,SubsampleFileName.c_str());
 			//std::cout<<"from main SubPointIndex "<<biColoredGraph.color_number;
 			//
 			//
