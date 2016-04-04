@@ -16,8 +16,11 @@
 #include <boost/program_options.hpp>
 #define ROUNDOFF 100
 #include <float.h>
-float rounding(float x)	{return ceil(x*ROUNDOFF)/ROUNDOFF;}
-float minuss(float x, float y){ return abs(rounding(rounding(x)-rounding(y)));}
+#include "sampler.h"
+#include <ANN/ANN.h>
+//float rounding(float x)	{return ceil(x*ROUNDOFF)/ROUNDOFF;}
+//float minuss(float x, float y){ return abs(rounding(rounding(x)-rounding(y)));}
+
 ////////////////
 
 
@@ -31,7 +34,10 @@ int minDistance(float dist[], int V, bool sptSet[])
  
    for (int v = 0; v < V; v++)
      if (sptSet[v] == false && dist[v] <= min)
-         {min = dist[v]; min_index = v;}
+         {
+         	min = dist[v]; 
+         	min_index = v;
+         }
  
    return min_index;
 }
@@ -46,64 +52,6 @@ int printSolution(int dist[], int V, int n)
  
 // Funtion that implements Dijkstra's single source shortest path algorithm
 // for a graph represented using adjacency matrix representation
-int dijkstra(float *graph[], int V, int src, float* dist, std::vector<int> SubptInd)
-{
-	
-    //static int dist[V];     // The output array.  dist[i] will hold the shortest
-                      // distance from src to i
- 
-     bool sptSet[V]; // sptSet[i] will true if vertex i is included in shortest
-                     // path tree or shortest distance from src to i is finalized
- 
-     // Initialize all distances as INFINITE and stpSet[] as false
-     for (int i = 0; i < V; i++)
-        {
-        	//if(i!=src)
-        	dist[i] = FLT_MAX;
-        	sptSet[i] = false;
-        }
- 	
-     // Distance of source vertex from itself is always 0
-     dist[src] = 0;
- 
-     // Find shortest path for all vertices
-     for (int count = 0; count < V-1; count++)
-     {
-       // Pick the minimum distance vertex from the set of vertices not
-       // yet processed. u is always equal to src in first iteration.
-     	//cout<<"inside dijkstra1";
-		//getchar();
-       int u = minDistance(dist, V, sptSet);
- 		//cout<<"inside dijkstra2";
-		//getchar();
-       // Mark the picked vertex as processed
-        sptSet[u] = true;
-        if(u!=src && SubptInd[u] != 0)	//closes subsampled point
-        	{if(SubptInd[src]!=0 ) 
-        		{
-        			cout<<"Error";	exit(0);	
-        		}
-        		return SubptInd[u];
-        	}
- 		//cout<<"inside dijkstra3";
-		//																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																										getchar();
-       // Update dist value of the adjacent vertices of the picked vertex.
-       for (int v = 0; v < V; v++)
- 		{
-         // Update dist[v] only if is not in sptSet, there is an edge from 
-         // u to v, and total weight of path from src to  v through u is 
-         // smaller than current value of dist[v]
-       	//if(count == 2 && v>6700) {	cout<<"inside dijkstraloop. u:"<<u<<" "<<v<<"\n";		getchar();}
-         if (!sptSet[v] && graph[u][v] && dist[u] != FLT_MAX 
-                                       && dist[u]+graph[u][v] < dist[v])
-            dist[v] = dist[u] + graph[u][v];
-    	}
-     }
-
- return -1;
-     // print the constructed distance array
-   //  printSolution(dist, V);
-}
 
 
 ////////////////
@@ -118,7 +66,7 @@ int dijkstra(float *graph[], int V, int src, float* dist, std::vector<int> Subpt
 	/////////////////////////// gets all points from datapoints2///////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////////
 	cout<<" \nfrom get sub points.";
-	ifstream file(filename1);			//datapoints2
+	ifstream file(filename1);			//original point sets
 	file>>str;	dim = atoi(str);		
 	file>>str; noPoints=atoi(str);
 	
@@ -187,9 +135,29 @@ int dijkstra(float *graph[], int V, int src, float* dist, std::vector<int> Subpt
 	//exit(0);
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	ifstream filemap(filename2);
 
 	for(int i=0;i<freqTot;i++)			//Initialise
 			SubptInd[i]=0;
+
+	/*for(int i=0;i<freqTot;i++)			// Put in the map
+		{
+			SubptInd[i]=0;
+			if (i<freqP)
+			{
+			
+			
+			filemap>>str;
+			int coord = atoi(str);
+			if(coord>freqTot-1)
+				{	cout<<"Point not found";	exit(0);}
+			if (i==0)
+				SubptInd[coord] = freqTot+10;
+			else SubptInd[coord] = i;
+			}
+		}
+	*/
+
 	int j=0;
 	int countre = 0;
 	cout<<" inside submap ";
@@ -222,16 +190,10 @@ int dijkstra(float *graph[], int V, int src, float* dist, std::vector<int> Subpt
 	 			j++;
 	 			if(j==freqTot)
 	 				{
-	 					cout<<"No match found "<<rounding(subPoints[i][0])<<" "<<rounding(subPoints[i][1])<<" "<<rounding(subPoints[i][2])<<"\n";;
+	 					cout<<"No match found "<<(subPoints[i][0])<<" "<<(subPoints[i][1])<<" "<<(subPoints[i][2])<<"\n";;
 	 					exit(0);
 	 				}
 	 		}
-	 		//cout<<"matched i:"<<i<<" j:"<<j<<" ";
-	 		//cout<<(inPoints[j])[0]<<" "<<(inPoints[j])[1]<<" "<<(inPoints[j])[2]<<"		WITH 	"; 	
-			//cout<<subPoints[i][0]<<" "<<subPoints[i][1]<<" "<<subPoints[i][2]<<"\n";
-			
-	 	
-
 
 	 }
 
@@ -244,25 +206,11 @@ return freqTot;
 	//vector<float*>().swap(subPoints);
 }
 
-/////////////////////////////////////////////////
-
-//int findmin(int first[], int noPoints,std::map<int, int> SubptInd )
-//{/
-//	int min = INT_MAX;
-//	int pos = -1;
-//	for(int i=0;i<noPoints;i++)
-//		if(first[i]<min && SubptInd[i]!=0)
-//			{
-//				min = first[i];
-//				pos = i;
-//			}
-//return pos;
-//}
 
 /////////////////////////////////////////////////
 void inputGraph(const char* filename1,const char* filename2, std::map<int, int> &SubPointIndex, std::vector<int> &ColorMapping )
 {
-	ifstream file(filename1);
+	
 	int dim;	
 	int noPoints;
 	char str[10];
@@ -284,70 +232,59 @@ for(it_type iterator = SubPointIndex.begin(); iterator != SubPointIndex.end(); i
 			SubptInd[iterator->first] = iterator->second;
 			count1++;
 		}
-cout<<"\ninside inputGraph. SubptInd: "<<SubptInd.size(); 	
-//	ofstream fileee("SubptInd");
+	cout<<"\ninside inputGraph. SubptInd: "<<SubptInd.size(); 	
+	//	ofstream fileee("SubptInd");
 
 	int max1 = 0, max2 = 0;
-/*
-	for(int i=0;i<SubptInd.size();i++)
-			{
-				fileee<<SubptInd[i]<<"\n";
-				if(SubptInd[i] > SubptInd.size())
-					SubPointIndex[i] = 0;
-				else if(SubptInd[i]!=0)
-					{	SubPointIndex[i] = SubptInd[i];	count1++;}
-				else if(SubptInd[i]==0)
-					{SubPointIndex[i] = 0;}
-				if(SubptInd[i]>max1)
-					max1 = SubptInd[i];
-			}
-*/			//getchar();
-	//exit(0);
 	cout<<" SubPointIndex "<<SubPointIndex.size()<<"\n"<<" count "<<count1<<".		";
-	file>>str;		//get dimension
+
+	///////////////////////////////////////////////////////////////////////////////////////////
+	ifstream file(filename1);	//all points
+	file>>str;					//get dimension
 	dim = atoi(str);
-	
-	file>>str;	//get number of points
+	file>>str;					//get number of points
 	noPoints = atoi(str);
-	string nouse;
-	if(dim!=0)					//point coordinates are given
-	{
-		for(int i=0;i<dim*noPoints;i++)
-			file>>nouse;
 
-	}	//all datapoints have been removed. now form the graph
+
+	int					nPts = 0;				// actual number of data points
+	ANNpointArray		dataPts;				// data points
+	ANNpoint			queryPt;				// query point
+	ANNidxArray			nnIdx;					// near neighbor indices
+	ANNdistArray		dists;					// near neighbor distances
+	ANNkd_tree*			kdTree;					// search structure
+
 	
-	//////////Read in graph
-	float *MortonGraph[noPoints];
+	getArgs(dim, noPoints, filename1);						// read parameter of ANN tree
 	
-    for (int i=0; i<noPoints; i++)
-        {
-        	MortonGraph[i] = (float *)malloc(noPoints * sizeof(float));
-        	for(int j=0;j<noPoints;j++)
-        		{
-        			MortonGraph[i][j] = 0.0;
-        			//MortonGraph[j][i] = INT_MAX;
-        		}
+	queryPt = annAllocPt(dim);					// allocate query point
+	dataPts = annAllocPts(maxPts, dim);			// allocate data points
+	nnIdx = new ANNidx[k];						// allocate near neigh indices
+	dists = new ANNdist[k];						// allocate near neighbor dists
 
-        } 
+	string points;
+	ifstream* filestream = &file;
+	
+	while (nPts < maxPts && readPt(*filestream , dataPts[nPts])) 
+		{	 	
+			//printPt(cout, dataPts[nPts]);
+			//getchar();
+			nPts++;
+		}
 
-        //getchar();	
-        //memset(MortonGraph, 1000, sizeof(int) * noPoints * noPoints);
+
+
+	kdTree = new ANNkd_tree(					// build search structure
+					dataPts,					// the data points
+					nPts,						// number of points
+					dim);						// dimension of space
+
+
 
           char str1[10], str2[10], str3[10];
      
-     while(!file.eof())
-     {
-     	file>>str1;	file>>str2;	file>>str3;
-     	int u = atoi(str1), v = atoi(str2);
-     	float weight = atof(str3);
-     	MortonGraph[u][v] = weight;
-     	MortonGraph[v][u] = weight;
 
-     }
 
-    //cout<<" entering colormap loop.";
-	//getchar();
+
 float first[noPoints];
 int count=0;
 //getchar();
@@ -362,34 +299,45 @@ for(int i=0;i<noPoints;i++)
 				ColorMapping[i]= SubptInd[i];
 
 				count++;
-		}	//cout<<"end if part "; getchar();}	//this point is selected
+		}	
 	else
 	{
-		//cout<<"in else portion";
-		//getchar();
-		//cout<<" if part "; getchar(); 
-		int minpos = dijkstra(MortonGraph,noPoints,i,first,SubptInd);
-		//cout<<"out of dijkstra";
-		//getchar();
-		//int minpos = findmin(first,noPoints,SubptInd);
-		if(minpos == -1)	{cout<<"Error ! Point no:"<<i; exit(0);}
-		//cout<<"before color map";
-		//getchar();
-		else if(minpos==freqTot+10)
+		//cout<<"else part";	getchar();
+		for (int dimdim = 0; dimdim < dim; dimdim++)
+			queryPt[dimdim]  = dataPts[i][dimdim];
+		k = 0;
+		
+		do
+		{
+			k++;
+			if(k>noPoints)
+			{
+				cout<<"Exceeding k limit.";		exit(0);
+			}
+			nnIdx = new ANNidx[k];						// allocate near neigh indices
+			dists = new ANNdist[k];						// allocate near neighbor dists
+
+				kdTree->annkSearch(						// search
+				queryPt,						// query point
+				k,								// number of near neighbors
+				nnIdx,							// nearest neighbors (returned)
+				dists,							// distance (returned)
+				eps);							// error bound
+
+		}while( SubptInd[ nnIdx[k-1] ]  == 0 );	//while this nearest neighbour is not part of mapped vertices
+				
+		if( SubptInd[ nnIdx[k-1] ] == freqTot+10 )
 			ColorMapping[i] = 0;
-		else if(minpos>SubptInd.size())
-			{ColorMapping[i] = 0;	cout<<"Error. greater than subpt index "<<minpos<<"fir index "<<i; exit(0);}
+		else if( nnIdx[k-1] > SubptInd.size() )
+			{ColorMapping[i] = 0;	cout<<"Error. greater than subpt index "<<nnIdx[k-1]<<"fir index "<<i; exit(0);}
 		else
-			ColorMapping[i] = minpos;
-		//cout<<"after color map";
-		//getchar();
+			ColorMapping[i] = SubptInd[ nnIdx[k-1] ];
+		
 	}
 
 }
-//cout<<"		exit colormap loop.";
+
 ofstream filee("ColorMap");
-//cout<<"color map"<<count<<"\n";
-//getchar();
 for(int i=0;i<ColorMapping.size();i++)
 		{
 			filee<<ColorMapping[i]<<" "<<i<<" \n";
@@ -412,10 +360,6 @@ cout<<"color map. count: "<<count<<" max1: "<<max1<<" max2: "<<max2<<"SubPointIn
 
 
   ////////////////Program over. delete morton code
-for (int i=0; i<noPoints; i++) 
-        delete MortonGraph[i];
-
-    //delete [] MortonGraph;
 
 }	//end of function inputGraph
 
